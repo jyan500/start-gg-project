@@ -1,23 +1,24 @@
 export type SinglesParticipant = {
-	id: Number
-	gamerTag: String		
+	id: number
+	gamerTag: string		
 }
 
 export type DoublesParticipant = {
-	id1: Number
-	gamerTag1: String
-	id2: Number
-	gamerTag2: String
+	id1: number
+	gamerTag1: string
+	id2: number
+	gamerTag2: string
 }
 
 export type Tournament = {
-	id: Number
-	name: String
-	city: String
+	id: number
+	name: string
+	city: string
+	profileImg: string
 	startAt: Date
-	url: String
-	venueName: String | null
-	venueAddress: String | null
+	url: string
+	venueName: string | null
+	venueAddress: string | null
 	singlesParticipants: Array<SinglesParticipant>
 	doublesParticipants: Array<DoublesParticipant>
 }

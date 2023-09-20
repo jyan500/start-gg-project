@@ -7,7 +7,6 @@ const Header = () => {
 	return (
 		<Jumbo>
 			<h1>Norcal Tournament Listings</h1>
-			<img style={{borderRadius: "50%"}} width="180" height="180" src={meleeLogo}/>
 		</Jumbo>
 	)
 }
