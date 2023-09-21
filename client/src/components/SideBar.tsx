@@ -5,7 +5,7 @@ import meleeLogo from "../assets/norcal-melee.jpg"
 const SideBar = () => {
 	return (
 		<div>
-			<img style={{borderRadius: "50%"}} width="180" height="180" src={meleeLogo}/>
+			<img width="180" height="180" src={meleeLogo}/>
 			<div>
 				<nav>
 					<ul>

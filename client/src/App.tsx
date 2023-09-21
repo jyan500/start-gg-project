@@ -19,7 +19,6 @@ const App = () => {
                         <SideBar></SideBar>
                     </div>
                     <div style= {{flex: 1}}>
-                        <Header></Header>
                         <Routes>
                             <Route path="/" element={<Home/>}></Route> 
                             <Route path="/tournaments" element={<Tournament/>}></Route>    
