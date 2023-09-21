@@ -1,27 +1,18 @@
 import React, { useEffect, useState } from "react"
 import TournamentCard from "./TournamentCard"
+import { Tournament as TournamentType } from "../types/common"
 import api from "../config/api"
+import useSWR from "swr"
+
+const fetcher = (url: string) => api.get(url).then(res => res.data)
 
 const Tournament = () => {
-	const [data, setData] = useState([])
-
-    useEffect(() => {
-        const get = async () => {
-            const res = await api.get("/tournaments")
-            try{
-                setData(res.data)
-            }
-            catch(err) {
-                console.log(err)
-            }
-        }
-        get()
-    }, [])
+	const {data, error} = useSWR("/tournaments", fetcher)
 	return (
 		<div>
-            {data.length ? data.map(tournament => (  
+            {data?.map((tournament: TournamentType) => (  
                 <TournamentCard tournament={tournament}></TournamentCard>
-            )) : null} 
+            ))} 
         </div>
 	)
 }
