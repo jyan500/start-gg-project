@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import './App.css';
 import Header from "./components/Header"
 import Footer from "./components/Footer"
 import SideBar from "./components/SideBar"
@@ -9,21 +8,21 @@ import Home from "./components/Home"
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 
 const App = () => {
-   
-
     return (
         <div className="App">
             <Router>
-                <div style = {{display: "flex"}}>
-                    <div>
+                <div className="flex">
+                    <div className = "h-screen sticky top-0">
                         <SideBar></SideBar>
                     </div>
-                    <div style= {{flex: 1}}>
-                        <Routes>
-                            <Route path="/" element={<Home/>}></Route> 
-                            <Route path="/tournaments" element={<Tournament/>}></Route>    
-                            <Route path="/players" element={<Player/>}></Route>    
-                        </Routes>
+                    <div className="flex-1">
+                        <div>
+                            <Routes>
+                                <Route path="/" element={<Home/>}></Route> 
+                                <Route path="/tournaments" element={<Tournament/>}></Route>    
+                                <Route path="/players" element={<Player/>}></Route>    
+                            </Routes>
+                        </div>
                         <Footer></Footer>
                     </div>
                 </div>
