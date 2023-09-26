@@ -6,6 +6,7 @@ const Home = () => {
 	return (
 		<div>
 			<HeroSection imgUrl={Banner} backgroundPosition="center"></HeroSection>
+
 		</div>
 	)
 }

@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
-import Header from "./components/Header"
+import React from 'react';
 import Footer from "./components/Footer"
 import SideBar from "./components/SideBar"
-import Player from "./components/Player"
+import PowerRanking from "./components/player/PowerRanking"
+import PlayerDatabase from "./components/player/PlayerDatabase"
 import Tournament from "./components/Tournament"
 import Home from "./components/Home"
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
@@ -20,7 +20,8 @@ const App = () => {
                             <Routes>
                                 <Route path="/" element={<Home/>}></Route> 
                                 <Route path="/tournaments" element={<Tournament/>}></Route>    
-                                <Route path="/players" element={<Player/>}></Route>    
+                                <Route path="/players/power-ranking" element={<PowerRanking/>}></Route>    
+                                <Route path="/players/database" element={<PlayerDatabase/>}></Route>    
                             </Routes>
                         </div>
                         <Footer></Footer>
