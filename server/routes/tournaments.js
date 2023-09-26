@@ -27,7 +27,9 @@ router.get("/", (req, res) => {
       url
       venueName
       venueAddress
-
+      images(type: "profile"){
+      	url	
+      }
       events(filter: {
         videogameId: 1
       }){
@@ -47,13 +49,15 @@ router.get("/", (req, res) => {
   }
 },
 	`
+	const todaysDate = new Date()
+	todaysDate.setUTCHours(0, 0, 0, 0)
 	const variables = {
 		"page": 1,
 		"videogameId":1,
 		"perPage": 30,
 		"coordinates": "37.7749, -122.4194",
 		"radius": "100mi",
-		"afterDate": Math.floor(new Date().getTime()/1000) // Today's date in unix timestamp
+		"afterDate": Math.floor(todaysDate.getTime()/1000) // Today's date in unix timestamp
 	}
 	const sendGraphQLRequest = async () => {
 		try {
@@ -75,7 +79,6 @@ router.get("/", (req, res) => {
 				return data
 			}
 			else {
-				console.log("Graph QL Request Failed: ", response.statusText)
 				return {"failed": response.statusText}
 			}
 		}
@@ -91,6 +94,7 @@ router.get("/", (req, res) => {
 			let tournamentWithEntrants = {
 				...tournament,
 				startAt: new Date(tournament.startAt * 1000),
+				profileImg: tournament.images.length ? tournament.images[0].url : "",
 				singlesParticipants: Object.keys(meleeSingles).length > 0 ? meleeSingles.entrants.nodes.map((entrant) => ({
 					id: entrant.participants[0].id,
 					gamerTag: entrant.participants[0].gamerTag
@@ -103,7 +107,7 @@ router.get("/", (req, res) => {
 				})) : [],
 			}
 			// parse out entrants from the final result as it's not needed
-			const {entrants, ...parsedTournament} = tournamentWithEntrants 
+			const {entrants, images, ...parsedTournament} = tournamentWithEntrants 
 			result.push(parsedTournament)
 		})
 		console.log(JSON.stringify(result))

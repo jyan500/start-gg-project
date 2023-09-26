@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { Link, PathMatch } from "react-router-dom"
+import { MdKeyboardArrowDown as ArrowDown, MdKeyboardArrowUp as ArrowUp } from "react-icons/md"
 
 type SubMenu = {
 	text: string
@@ -25,7 +26,10 @@ const SubMenu = (props: SubMenuProps) => {
 
 	return (
 		<ul>
-			<li onClick = {onClick} className = {`text-white text-sm flex text-center items-center gap-x-4 p-2 hover:bg-slate-900`}>{props.data.text}</li>	
+			<li onClick = {onClick} className = {`text-white text-sm flex justify-between text-center gap-x-4 p-2 hover:bg-slate-900`}>
+				<p>{props.data.text}</p> {subMenuOpen ? <ArrowUp/> : <ArrowDown/>}
+			</li>	
+
 			<ul className = {subMenuOpen ? "visible" : "invisible"}>
 				{
 					props.data.subMenus.map((menu) => {
