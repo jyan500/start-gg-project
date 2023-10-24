@@ -22,3 +22,9 @@ export type Tournament = {
 	singlesParticipants: Array<SinglesParticipant>
 	doublesParticipants: Array<DoublesParticipant>
 }
+
+export type Player = {
+	userId: number	
+	playerId: number
+	gamerTag: string
+}

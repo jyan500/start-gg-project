@@ -1,4 +1,4 @@
-const { makePaginatedCall } = require("../utils/utils")
+const { getAllPages } = require("../utils/utils")
 const axios = require("axios")
 const Player = require("../models/Player")
 const mongoose = require("mongoose")
@@ -39,6 +39,7 @@ query NorcalMeleeTournaments($perPage: Int, $page: Int, $afterDate: Timestamp, $
             	id
               gamerTag
               player {
+              	id
               	user {
               		id
               	}
@@ -64,14 +65,14 @@ const variables = {
 
 const populateDB = async (query, variables) => {
 	const players = {}
-	const results = await makePaginatedCall(query, variables, ["tournaments"])
+	const results = await getAllPages(query, variables, ["tournaments"])
 	results.map((tournament, index) => {
 		const singlesEntrants = tournament.events[0].entrants.nodes
 		singlesEntrants.map((participant) => {
 			const p = participant.participants[0]
 			if (p.player?.user){
 				players[p.player.user.id] = {
-					playerId: p.id,	
+					playerId: p.player.id,	
 					gamerTag: p.gamerTag,
 					userId: p.player.user.id
 				}
@@ -89,19 +90,6 @@ const populateDB = async (query, variables) => {
 	})
 
 	const allPlayers = Object.values(players)
-	// console.log(JSON.stringify(allPlayers))
-	// const newPlayer = new Player({
-	// 	userId: allPlayers[0].userId,
-	// 	gamerTag: allPlayers[0].gamerTag,
-	// 	playerId: allPlayers[0].playerId,
-	// })
-	// const res = await Player.find({userId: allPlayers[0].userId})
-	// console.log("was player found: ", res)
-	// if (!res.length){
-	// 	const result = await newPlayer.save()
-	// 	console.log("result: ", result)
-	// }
-
 	// uncomment below to clean database
 	// await Player.deleteMany({})
 
@@ -109,10 +97,7 @@ const populateDB = async (query, variables) => {
 	const sampleId = allPlayers[0].userId
 	const res = await Player.find({userId: sampleId})
 
-	// // deletes all for now
-
 	// connect to the DB
-	// mongoose.connect("mongodb://localhost/start-gg-project")
 	const mapped = allPlayers.map((player) => {
 		return {
 			updateOne: {
@@ -122,7 +107,6 @@ const populateDB = async (query, variables) => {
 			}
 		}
 	})
-	console.log(JSON.stringify(mapped))
 	try {
 		await Player.bulkWrite(mapped)
 	}
@@ -130,12 +114,7 @@ const populateDB = async (query, variables) => {
 		console.log(error)
 	}
 
-	// find	
 	const res2 = await Player.find({userId: sampleId})
-
-	// deletes all for now
-	// await Player.deleteMany({})
-
 
 }
 

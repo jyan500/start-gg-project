@@ -2,15 +2,14 @@ const express = require("express")
 const axios = require("axios")
 const router = express.Router()
 const Player = require("../models/Player")
+const { getPage } = require("../utils/utils")
 
 router.get("/", async (req, res) => {
 	const gamerTag = req.query.tag
 	// get all players where tag in their gamerTag string
 	try {
-		// const players = await Player.find({"gamerTag": "/.*cardsng.*/i"})
-		const players = await Player.find({"gamerTag": { "$regex": gamerTag, "$options": "i"}}, { _id: 0})
-		// console.log(JSON.stringify(players.toJSON()))
-		console.log("players: ", players)
+		const players = await Player.find({"gamerTag": { "$regex": gamerTag, "$options": "i"}}, { _id: 0}).sort({"gamerTag": 1})
+		console.log(JSON.stringify(players))
 		res.json(players)	
 	}
 	catch (error) {
@@ -18,33 +17,40 @@ router.get("/", async (req, res) => {
 	}
 })
 
-router.get("/:id", (req, res) => {	
+router.get("/:id", async (req, res) => {	
 	const userId = req.params.id
-	const meleeSingleSetsFromEventsEnteredByUser = 
+	const currentPage = req.query?.currentPage ?? 1 
+	const totalPages = req.query?.totalPages ?? 1
+	const player = await Player.findOne({"userId": userId})
+	// melee singles sets from player 
+	const query = 
 	`
-	query User($userId: ID!, $playerId: ID!){
+	query User($page: Int, $userId: ID!, $playerId: ID!){
     user(id: $userId){
       id
       name
       events(query: {
-        page: 4,
-        perPage: 1,
+        page: $page,
+        perPage: 6,
         sortBy: "startAt desc",
         filter: {
           videogameId: 1,
           eventType: 1
         }
       }){
+      	pageInfo {
+		  		totalPages
+		  		page
+		  	}
         nodes {
           id 
           name
           startAt
           tournament {
             name
-            
           }
           sets(
-            page:1,
+            page: 1,
         		perPage: 20,
             sortType: RECENT,
             filters: {
@@ -82,6 +88,18 @@ router.get("/:id", (req, res) => {
     }
 }
 `
+	const variables = {
+		"page": 1,
+		"userId":userId, 
+		"playerId":player.playerId 
+	}
+
+	const [result, currentPageParam, totalPagesParam] = await getPage(query, variables, ["user", "events"], currentPage, totalPages)
+	console.log(JSON.stringify(result))
+
+	
+
+
 	res.json("hello")
 })
 

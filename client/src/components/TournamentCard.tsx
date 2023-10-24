@@ -8,23 +8,27 @@ type Props = {
 
 const TournamentCard = (props: Props) => {
 	return (
-		<Card>
-			<div style={{flex: "20%"}}>
+		<div className = "p-8 flex border items-center">
+			<div className = "mr-8">
 				<img width="250" height="250" src = {props.tournament.profileImg}/>
 			</div>
-			<div style={{flex: "80%"}}>
+			<div>
 				<p>{props.tournament.name}</p>
 				<p>{new Date(props.tournament.startAt).toLocaleString()}</p>
 				<p>{props.tournament.venueAddress}</p>
 				<a href={`https://start.gg${props.tournament.url}`}>{`https://start.gg${props.tournament.url}`}</a>
-				{/*<p>Singles Participants:</p>
+				<p>Singles Participants:</p>
 				<div>
 					{
-						props.tournament.singlesParticipants.map((participant) => (
-							<p>{participant.gamerTag}</p>
-						))
+						props.tournament.singlesParticipants.map((participant, index) => {
+							if (index < 20)
+								return (
+									<p>{participant.gamerTag}</p>
+								)
+						})
 					}
-				</div>*/}
+					<p>{props.tournament.singlesParticipants.length > 20 ? "See Start GG Link for full list of participants" : ""} </p>
+				</div>
 			{/*	<p>Doubles Participants:</p>
 				<div>
 					{
@@ -34,7 +38,7 @@ const TournamentCard = (props: Props) => {
 					}
 				</div>*/}
 			</div>
-		</Card>
+		</div>
 	)
 }
 

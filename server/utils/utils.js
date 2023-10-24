@@ -28,8 +28,33 @@ const sendGraphQLRequest = async (query, variables) => {
 	}
 }
 
-const makePaginatedCall = async (queryString, variables, keys) => {
-	let totalPages = 1	
+const getPage = async (queryString, variables, keys, currentPageParam = 1, totalPagesParam = 1) => {
+	// make an initial request to find out what the totalPages amount is
+	let currentPage = currentPageParam
+	let totalPages = totalPagesParam
+	let allResults = []
+	if (!totalPages || currentPage <= totalPages){
+		const res = await sendGraphQLRequest(queryString, {...variables, page: currentPage})
+		if (res){
+			let data = res
+			for (let k of keys){
+				data = data[k]
+				if (!data){
+					console.log("Something has gone wrong while parsing data, returning collected data...")
+					break
+				}
+			}
+			currentPage += 1
+			allResults = [...allResults, ...data["nodes"]]
+			totalPages = data["pageInfo"]["totalPages"]		
+		}
+
+	}
+	return [allResults, currentPage, totalPages]
+}
+
+const getAllPages = async (queryString, variables, keys) => {
+	let totalPages = 1 
 	let currentPage = 1
 	let allResults = []
 
@@ -55,4 +80,4 @@ const makePaginatedCall = async (queryString, variables, keys) => {
 	return allResults
 }
 
-module.exports = { sendGraphQLRequest, makePaginatedCall }
+module.exports = { sendGraphQLRequest, getAllPages, getPage }

@@ -1,6 +1,5 @@
 import React from "react"
 import styled from "styled-components"
-import meleeLogo from "../assets/norcal-melee.jpg"
 
 
 const Header = () => {
