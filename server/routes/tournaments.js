@@ -39,8 +39,13 @@ router.get("/", (req, res) => {
         entrants{
           nodes {
             participants {
-              id
+            	id
               gamerTag
+              player {
+              	user {
+              		id
+              	}
+              }
             }
           }
         }
@@ -96,21 +101,26 @@ router.get("/", (req, res) => {
 				startAt: new Date(tournament.startAt * 1000),
 				profileImg: tournament.images.length ? tournament.images[0].url : "",
 				singlesParticipants: Object.keys(meleeSingles).length > 0 ? meleeSingles.entrants.nodes.map((entrant) => ({
-					id: entrant.participants[0].id,
+					playerId: entrant.participants[0].id,
+					userId: entrant.participants[0].player?.user?.id,
 					gamerTag: entrant.participants[0].gamerTag
 				})) : [],
 				doublesParticipants: Object.keys(meleeDoubles).length > 0 ? meleeDoubles.entrants.nodes.map((entrant) => ({
-					id1: entrant.participants[0].id,
+					playerId1: entrant.participants[0].id,
 					gamerTag1: entrant.participants[0].gamerTag,
-					id2: entrant.participants[1].id,
+					userId1: entrant.participants[0].player.user.id,
+					playerId2: entrant.participants[1].id,
+					userId2: entrant.participants[1].player.user.id,
 					gamerTag2: entrant.participants[1].gamerTag,
 				})) : [],
 			}
-			// parse out entrants from the final result as it's not needed
-			const {entrants, images, ...parsedTournament} = tournamentWithEntrants 
+			// console.log("\n\n\nbefore: ", JSON.stringify(tournamentWithEntrants))
+			// parse out events from the final result as it's not needed
+			const {events, images, ...parsedTournament} = tournamentWithEntrants 
+			// console.log("\n\n\nafter: ", JSON.stringify(tournamentWithEntrants))
 			result.push(parsedTournament)
 		})
-		console.log(JSON.stringify(result))
+		// console.log(JSON.stringify(result))
 		res.json(result)
 	})
 })
