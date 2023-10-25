@@ -94,13 +94,32 @@ router.get("/:id", async (req, res) => {
 		"playerId":player.playerId 
 	}
 
-	const [result, currentPageParam, totalPagesParam] = await getPage(query, variables, ["user", "events"], currentPage, totalPages)
-	console.log(JSON.stringify(result))
+	const [results, currentPageParam, totalPagesParam] = await getPage(query, variables, ["user", "events"], currentPage, totalPages)
+	// console.log(JSON.stringify(results))
 
-	
-
-
-	res.json("hello")
+	const mapped = results.map((result) => {
+		const tournament = result.tournament.name
+		const timestamp = result.startAt
+		// we need to reverse it due to start gg's order going from 
+		// most recent set played
+		const sets = result.sets.nodes.toReversed().map((set) => {
+			const [player1, player2] = set.slots
+			console.log("player1: ", player1)
+			return {
+				"winner": set.winnerId,
+				"displayScore": set.displayScore,
+				"round": set.fullRoundText,
+				"player1": {"score": player1.standing.stats.score.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
+				"player2": {"score": player2.standing.stats.score.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
+			}
+		})
+		return {
+			"tournament": tournament,
+			"date": new Date(timestamp * 1000),
+			"sets": sets
+		}
+	})
+	res.json(mapped)
 })
 
 module.exports = router
