@@ -28,3 +28,18 @@ export type Player = {
 	playerId: number
 	gamerTag: string
 }
+
+export type Set = {
+	winner: number
+	displayScore: string
+	round: string
+	player1: SetParticipant
+	player2: SetParticipant
+}
+
+export type SetParticipant = {
+	score: number
+	entrantId: number
+	gamerTag: string
+	playerId: number
+}

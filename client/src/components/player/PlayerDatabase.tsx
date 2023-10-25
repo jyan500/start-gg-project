@@ -3,16 +3,26 @@ import PlayerBanner from "../../assets/bay-area-mini.jpeg"
 import HeroSection from "../styled/HeroSection"
 import SearchBar from "../styled/SearchBar"
 import api from "../../config/api"
-import { Player } from "../../types/common"
+import { Player, Set } from "../../types/common"
+
+type TournamentSetResponse = {
+	tournament: string
+	date: Date
+	sets: Array<Set>
+	currentPage: number
+	totalPages: number
+}
 
 const PlayerDatabase = () => {
 	const [players, setPlayers] = useState<Array<Player>>([])
+	const [tournamentSets, setTournamentSets] = useState<Array<TournamentSetResponse>>([]) 
 	const onSubmit = async (val: string) => {
 		const res = await api.get(`/players?tag=${val}`)
 		setPlayers(res.data)
 	}
 	const onClick = async (userId: number) => {
 		const res = await api.get(`/players/${userId}`)
+		setTournamentSets(res.data)
 	}
 	return (
 		<div>
@@ -35,6 +45,26 @@ const PlayerDatabase = () => {
 						{players.map((p) => (<div><button onClick = {() => onClick(p.userId)} className = "p-1 hover:bg-sky-200">{p.gamerTag}</button></div>))}
 					</div>
 				</div>
+			</div>
+			<div className = "flex-col justify-center items-center p-8">
+				{tournamentSets.map((tournament) => {
+					return (
+						<div>
+							<h1>{tournament.tournament}</h1>
+							<p>{new Date(tournament.date).toLocaleString()}</p>
+							{
+								tournament.sets.map((set) => {
+									return (
+										<div className = "flex-col items-center">
+											<p>{set.round}</p>
+											<p>{set.displayScore}</p>	
+										</div>
+									)
+								})
+							}
+						</div>
+					)
+				})}
 			</div>
 		</div>
 	)
