@@ -1,7 +1,6 @@
 import React, {useState} from "react"
 import PlayerBanner from "../../assets/bay-area-mini.jpeg"
 import HeroSection from "../styled/HeroSection"
-import SearchBar from "../styled/SearchBar"
 import api from "../../config/api"
 import { Player, Set } from "../../types/common"
 import { ReactSearchAutocomplete } from "react-search-autocomplete" 
@@ -76,7 +75,8 @@ const PlayerDatabase = () => {
 								styling ={
 									{ 
 										borderRadius: "4px",
-										boxShadow: "rgba(32, 33, 36, .28) 0px 1px 2px 0px"
+										boxShadow: "rgba(32, 33, 36, .28) 0px 1px 2px 0px",
+										zIndex: 999,
 									}
 								}
 							/>
