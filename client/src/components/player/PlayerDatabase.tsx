@@ -28,8 +28,8 @@ const PlayerDatabase = () => {
 	}
 	const onSelect = async (p: any) => {
 		console.log("p: ", p)
-		setCurrentPlayer(p)
 		const res = await api.get(`/players/${p.userId}`)
+		setCurrentPlayer(p)
 		setTournamentSets(res.data.results)
 		setCurrentPage(res.data.currentPage)
 		setTotalPages(res.data.totalPages)
@@ -85,8 +85,8 @@ const PlayerDatabase = () => {
 					</div>
 				</div>
 			</div>
-			{
-				tournamentSets.length ? (<div className = "pb-8 pl-8 pr-8">
+			<div className = "h-500">
+				<div className = "pb-8 pl-8 pr-8">
 					<div className = "flex flex-row p-4">
 						<div className = "flex-1 p-8">
 							<h1 className = "border p-4 font-bold text-center">Tournaments</h1>
@@ -109,13 +109,13 @@ const PlayerDatabase = () => {
 							})}
 							<div className = "flex justify-between mt-4">
 								{ 
-									currentPage > 1 ? ( 
+									tournamentSets.length && currentPage > 1 ? ( 
 									<button className = "p-4" onClick={onPrev}><ArrowLeft/><span>Previous</span></button>) : <div></div>
 								}
 								{
-									currentPage <= totalPages && (
+									tournamentSets.length && currentPage <= totalPages ? (
 										<button className = "p-4" onClick={onNext}><ArrowRight/><span>Next</span></button>
-									)
+									) : <div></div>
 								}
 							</div>
 						</div>
@@ -158,8 +158,8 @@ const PlayerDatabase = () => {
 							}
 						</div>
 					</div>
-				</div>) : null
-			}
+				</div>
+			</div>
 		</div>
 	)
 }

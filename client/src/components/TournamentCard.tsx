@@ -17,7 +17,7 @@ const TournamentCard = (props: Props) => {
 				<p>{new Date(props.tournament.startAt).toLocaleString()}</p>
 				<p>{props.tournament.venueAddress}</p>
 				<a href={`https://start.gg${props.tournament.url}`}>{`https://start.gg${props.tournament.url}`}</a>
-				<p>Singles Participants:</p>
+				{/*<p>Singles Participants:</p>
 				<div>
 					{
 						props.tournament.singlesParticipants.map((participant, index) => {
@@ -28,7 +28,7 @@ const TournamentCard = (props: Props) => {
 						})
 					}
 					<p>{props.tournament.singlesParticipants.length > 20 ? "See Start GG Link for full list of participants" : ""} </p>
-				</div>
+				</div>*/}
 			{/*	<p>Doubles Participants:</p>
 				<div>
 					{
