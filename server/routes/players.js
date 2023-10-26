@@ -62,7 +62,7 @@ router.get("/:id", async (req, res) => {
           }
           sets(
             page: 1,
-        		perPage: 20,
+        		perPage: 10,
             sortType: RECENT,
             filters: {
               playerIds: [$playerId]
@@ -127,7 +127,7 @@ router.get("/:id", async (req, res) => {
 		return {
 			"tournament": tournament,
 			"numEntrants": numEntrants,
-			"placement": result.userEntrant.standing.placement,
+			"placement": result.userEntrant?.standing?.placement,
 			"date": new Date(timestamp * 1000),
 			"sets": sets,
 		}

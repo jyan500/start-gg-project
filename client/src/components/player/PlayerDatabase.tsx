@@ -20,6 +20,7 @@ const PlayerDatabase = () => {
 	const [tournamentSets, setTournamentSets] = useState<Array<TournamentSetResponse>>([]) 
 	const [currentPage, setCurrentPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(1)
+	const [loading, setLoading] = useState(false)
 
 	const onSearch = async (val: string) => {
 		console.log("val: ", val)
@@ -28,7 +29,9 @@ const PlayerDatabase = () => {
 	}
 	const onSelect = async (p: any) => {
 		console.log("p: ", p)
+		setLoading(true)
 		const res = await api.get(`/players/${p.userId}`)
+		setLoading(false)
 		setCurrentPlayer(p)
 		setTournamentSets(res.data.results)
 		setCurrentPage(res.data.currentPage)
@@ -37,7 +40,9 @@ const PlayerDatabase = () => {
 
 	const onPrev = async () => {
 		if (currentPlayer){
+			setLoading(true)
 			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}&totalPages=${totalPages}`)
+			setLoading(false)
 			setTournamentSets(res.data.results)
 			setCurrentPage(res.data.currentPage)
 			setTotalPages(res.data.totalPages)
@@ -46,7 +51,9 @@ const PlayerDatabase = () => {
 
 	const onNext = async () => {
 		if (currentPlayer){
+			setLoading(true)
 			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}&totalPages=${totalPages}`)
+			setLoading(false)
 			setTournamentSets(res.data.results)
 			setCurrentPage(res.data.currentPage)
 			setTotalPages(res.data.totalPages)
@@ -85,7 +92,10 @@ const PlayerDatabase = () => {
 					</div>
 				</div>
 			</div>
-			<div className = "h-500">
+			<div className = {`visibility: ${loading ? "visible" : "hidden"}`}>
+				<p className = "text-center">Loading...</p>	
+			</div>
+			<div className = {`visibility: ${tournamentSets.length ? "visible": "hidden"} h-500`}>
 				<div className = "pb-8 pl-8 pr-8">
 					<div className = "flex flex-row p-4">
 						<div className = "flex-1 p-8">

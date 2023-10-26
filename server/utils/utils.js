@@ -68,14 +68,21 @@ const getAllPages = async (queryString, variables, keys) => {
 					break
 				}
 			}
-			currentPage += 1
-			allResults = [...allResults, ...data["nodes"]]
-			totalPages = data["pageInfo"]["totalPages"]
+			if (data){
+				currentPage += 1
+				allResults = [...allResults, ...data["nodes"]]
+				totalPages = data["pageInfo"]["totalPages"]
+			}
+			else {
+				break
+			}
 		}
 		else {
 			break
 		}
 	}
+	console.log("currentPage: ", currentPage)
+	console.log("totalPages: ", totalPages)
 	return allResults
 }
 
