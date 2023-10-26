@@ -24,8 +24,8 @@ export type Tournament = {
 }
 
 export type Player = {
+	id: number
 	userId: number	
-	playerId: number
 	gamerTag: string
 }
 

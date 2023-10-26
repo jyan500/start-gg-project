@@ -7,20 +7,25 @@ const { getPage } = require("../utils/utils")
 router.get("/", async (req, res) => {
 	const gamerTag = req.query.tag
 	// get all players where tag in their gamerTag string
-	try {
-		const players = await Player.find({"gamerTag": { "$regex": gamerTag, "$options": "i"}}, { _id: 0}).sort({"gamerTag": 1})
-		console.log(JSON.stringify(players))
-		res.json(players)	
+	if (gamerTag){
+		try {
+			const players = await Player.find({"gamerTag": { "$regex": gamerTag, "$options": "i"}}, { _id: 0}).sort({"gamerTag": 1})
+			const mapped = players.map((p) => ({...p.toObject(), id: p.playerId}))
+			res.json(mapped)	
+		}
+		catch (error) {
+			res.json(error)
+		}
 	}
-	catch (error) {
-		res.json(error)
+	else {
+		res.json([])	
 	}
 })
 
 router.get("/:id", async (req, res) => {	
 	const userId = req.params.id
-	const currentPage = req.query?.currentPage ?? 1 
-	const totalPages = req.query?.totalPages ?? 1
+	const currentPage = parseInt(req.query?.currentPage) ?? 1 
+	const totalPages = parseInt(req.query?.totalPages) ?? 1
 	const player = await Player.findOne({"userId": userId})
 	// melee singles sets from player 
 	const query = 
@@ -46,8 +51,14 @@ router.get("/:id", async (req, res) => {
           id 
           name
           startAt
+          numEntrants
           tournament {
             name
+          }
+          userEntrant (userId: $userId) {
+          	standing {
+          		placement
+          	}
           }
           sets(
             page: 1,
@@ -100,11 +111,11 @@ router.get("/:id", async (req, res) => {
 	const mapped = results.map((result) => {
 		const tournament = result.tournament.name
 		const timestamp = result.startAt
+		const numEntrants = result.numEntrants
 		// we need to reverse it due to start gg's order going from 
 		// most recent set played
 		const sets = result.sets.nodes.toReversed().map((set) => {
 			const [player1, player2] = set.slots
-			console.log("player1: ", player1)
 			return {
 				"winner": set.winnerId,
 				"displayScore": set.displayScore,
@@ -115,11 +126,15 @@ router.get("/:id", async (req, res) => {
 		})
 		return {
 			"tournament": tournament,
+			"numEntrants": numEntrants,
+			"placement": result.userEntrant.standing.placement,
 			"date": new Date(timestamp * 1000),
-			"sets": sets
+			"sets": sets,
 		}
 	})
-	res.json(mapped)
+
+	const mappedResults = {"results": mapped, "currentPage": currentPageParam, "nextPage": currentPageParam + 1, "totalPages": totalPagesParam}
+	res.json(mappedResults)
 })
 
 module.exports = router

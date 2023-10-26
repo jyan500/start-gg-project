@@ -44,7 +44,6 @@ const getPage = async (queryString, variables, keys, currentPageParam = 1, total
 					break
 				}
 			}
-			currentPage += 1
 			allResults = [...allResults, ...data["nodes"]]
 			totalPages = data["pageInfo"]["totalPages"]		
 		}
