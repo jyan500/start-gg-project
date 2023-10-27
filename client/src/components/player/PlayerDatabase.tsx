@@ -8,6 +8,7 @@ import { MdKeyboardArrowLeft as ArrowLeft, MdKeyboardArrowRight as ArrowRight } 
 
 type TournamentSetResponse = {
 	tournament: string
+	tournamentID: string
 	date: Date
 	numEntrants: number
 	placement: number
@@ -60,6 +61,13 @@ const PlayerDatabase = () => {
 		}
 	}
 
+	const onClickSet = (tournamentID: string) => {
+		const element = document.getElementById(tournamentID)
+		if (element){
+			element.scrollIntoView({behavior: "smooth"})
+		}
+	}
+
 	return (
 		<div>
 			<HeroSection  imgUrl={PlayerBanner} backgroundPosition="top">
@@ -95,7 +103,7 @@ const PlayerDatabase = () => {
 			<div className = {`visibility: ${loading ? "visible" : "hidden"}`}>
 				<p className = "text-center">Loading...</p>	
 			</div>
-			<div className = {`visibility: ${tournamentSets.length ? "visible": "hidden"} h-500`}>
+			<div className = {`visibility: ${tournamentSets.length ? "visible": "hidden"}`}>
 				<div className = "pb-8 pl-8 pr-8">
 					<div className = "flex flex-row p-4">
 						<div className = "flex-1 p-8">
@@ -103,17 +111,16 @@ const PlayerDatabase = () => {
 							<div className = "font-medium flex flex-row p-2 border">
 								<div className = "w-1/5">Date</div>
 								<div className = "flex-1">Name</div>
-								<div>Placing</div>
+								<div className = "">Placing</div>
 							</div>
 							{tournamentSets.map((tournament) => {
 								return (
-									<div className = "font-medium flex flex-row p-2 border">
+									<div onClick = {() => onClickSet(tournament.tournamentID) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
 										<div className = "w-1/5">
 											{new Date(tournament.date).toLocaleDateString()}
 										</div>
 										<div className = "flex-1">{tournament.tournament}</div>
-										<div><span className = "font-bold">{tournament.placement}</span> / {tournament.numEntrants}</div>
-										
+										<div className = ""><span className = "font-bold">{tournament.placement}</span> / {tournament.numEntrants}</div>
 									</div>
 								)
 							})}
@@ -129,16 +136,16 @@ const PlayerDatabase = () => {
 								}
 							</div>
 						</div>
-						<div className = "flex-1 p-8">
+						<div className = "flex-1 p-8" style = {{maxHeight: 500, overflowY: "scroll"}} >
 							<h1 className = "border p-4 font-bold text-center">Sets</h1>
 							{
 								tournamentSets.map((tournament) => {
 									return (
-										<div className = "text-center">
+										<div id = {tournament.tournamentID} className = "text-center">
 											<div className = "mt-4 mb-4">
 												<h1 className = "font-bold">{tournament.tournament}</h1>
 											</div>
-											<div className = "font-medium flex flex-row p-2 border">
+											<div className = "font-medium flex flex-row p-2 border text-base">
 												<div className = "w-1/3">Round</div>
 												<div className = "w-1/3">Opponent</div>
 												<div className = "w-1/3">Score</div>
@@ -151,7 +158,7 @@ const PlayerDatabase = () => {
 												const noScoreReported = player.score == null || opponent.score == null
 												const score = !noScoreReported ? `${player.score} - ${opponent.score}` : (winner.playerId === player.playerId) ? "WIN" : "LOSS" 
 												return (
-													<div className = {`font-medium flex flex-row p-2 border ${winner.playerId === player.playerId ? "bg-green-500" : "bg-red-500"}`}>
+													<div className = {`text-base font-medium flex flex-row p-2 border ${winner.playerId === player.playerId ? "bg-green-500" : "bg-red-500"}`}>
 														<div className = "w-1/3"><p>{set.round}</p></div>
 														<div className = "w-1/3">
 															<p> {opponent.gamerTag} </p>	

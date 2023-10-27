@@ -53,6 +53,7 @@ router.get("/:id", async (req, res) => {
           startAt
           numEntrants
           tournament {
+            id
             name
           }
           userEntrant (userId: $userId) {
@@ -126,6 +127,7 @@ router.get("/:id", async (req, res) => {
 		})
 		return {
 			"tournament": tournament,
+			"tournamentID": result.tournament.id,
 			"numEntrants": numEntrants,
 			"placement": result.userEntrant?.standing?.placement,
 			"date": new Date(timestamp * 1000),
