@@ -24,9 +24,9 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {	
 	const userId = req.params.id
-	const currentPage = parseInt(req.query?.currentPage) ?? 1 
-	const totalPages = parseInt(req.query?.totalPages) ?? 1
+	const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
 	const player = await Player.findOne({"userId": userId})
+	console.log("player: ", player)
 	// melee singles sets from player 
 
 	/*
@@ -68,10 +68,10 @@ router.get("/:id", async (req, res) => {
 // }
 // 	`
 		const query1 = `
-	query Sets ($playerId: ID!, $timestamp: Timestamp){
+	query Sets ($playerId: ID!, $timestamp: Timestamp, $page: Int){
   player(id: $playerId) {
     id
-    sets(perPage: 200, page: 1, filters: {updatedAfter: $timestamp}) {
+    sets(perPage: 20, page: $page, filters: {updatedAfter: $timestamp}) {
     	pageInfo {
 		  	totalPages
 		  	page
@@ -175,6 +175,9 @@ query PlayerSets($playerId: ID!, $tournamentId: ID!){
     }
     }
 }`
+
+	// currently unused, due to the issue of it missing tournaments
+  // where the player registers locally and not on start.gg
 	const query = 
 	`
 	query User($page: Int, $userId: ID!, $playerId: ID!){
@@ -248,19 +251,18 @@ query PlayerSets($playerId: ID!, $tournamentId: ID!){
 }
 `
 	const d = new Date()
-	d.setYear(d.getFullYear() - 1)
-	console.log("d: ", Math.ceil(d / 1000))
+	// get all sets from 6 months ago
+	d.setMonth(d.getMonth() - (1 * currentPage))
 	const variables = {
 		"page": 1,
 		"userId":userId, 
 		"playerId":player.playerId,
-		// "timestamp": Math.ceil(d / 1000) // unix timestamp from two years ago
-		"timestamp": 1681776000 // 
+		"timestamp": Math.ceil(d/1000) 
 	}
 
-	// const [results, currentPageParam, totalPagesParam] = await getPage(query, variables, ["user", "events"], currentPage, totalPages)
 	const results = await getAllPages(query1, variables, ["player", "sets"])
 	let mapped = results.reduce((acc, res) => {
+		// only get melee singles sets if the player played in multiple sets in the tournament 
 		if (res.event.videogame.id === 1 && res.event.type === 1){
 			if (!(res.event.tournament.id in acc)){
 				acc[res.event.tournament.id] = {"sets": [], "event": {}}
@@ -287,85 +289,7 @@ query PlayerSets($playerId: ID!, $tournamentId: ID!){
 		return acc
 	}, {})
 	mapped = Object.values(mapped).sort((res) => res.event.startAt).reverse()
-	// const eventIdSet = new Set() 
-	// const meleeSinglesEvents = []
-	// results.forEach((result) => {
-	// 	const event = result.event
-	// 	if (!eventIdSet.has(event.id)){
-	// 		meleeSinglesEvents.push({
-	// 			"tournamentId": event.tournament.id,
-	// 			"tournament": event.tournament,
-	// 			"eventId": event.id,
-	// 			"numEntrants": event.numEntrants,
-	// 			"startAt": event.startAt,
-	// 		})
-	// 		eventIdSet.add(result.event.id)
-	// 	}
-	// })
-	// console.log("*********** events *************")
-	// console.log(JSON.stringify(meleeSinglesEvents))
 	
-	// const setsByTournament = await Promise.all(meleeSinglesEvents.map(async (event) => {
-	// 	const variables2 = {
-	// 		playerId: player.playerId,
-	// 		tournamentId: event.tournamentId, 
-	// 	}
-	// 	const results2 = await getAllPages(query2, variables2, ["tournament", "events", "sets"])
-	// 	return results2.reduce((acc, result) => {
-	// 		const [player1, player2] = result.slots
-	// 		const set = {
-	// 				"winner": result.winnerId,
-	// 				"displayScore": result.displayScore,
-	// 				"round": result.fullRoundText,
-	// 				"player1": {"score": player1.standing.stats.score.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
-	// 				"player2": {"score": player2.standing.stats.score.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
-	// 		}
-	// 		acc["placement"] = player1.entrant.participants[0].player.id === player.playerId ? player1.entrant.standing.placement : player2.entrant.standing.placement
-	// 		acc["eventId"] = result.event.id
-	// 		acc["sets"].push(set)
-	// 		return acc
-	// 	}, {placement: null, eventId: null, sets: []})
-	// }))
-	// console.log("setsByTournament: ", setsByTournament)
-
-
-	// const mapped = results.map((result) => {
-	// 	const tournament = result.tournament.name
-	// 	const timestamp = result.startAt
-	// 	const numEntrants = result.numEntrants
-	// 	// we need to reverse it due to start gg's order going from 
-	// 	// most recent set played
-	// 	const sets = result.sets.nodes.toReversed().map((set) => {
-	// 		const [player1, player2] = set.slots
-	// 		return {
-	// 			"winner": set.winnerId,
-	// 			"displayScore": set.displayScore,
-	// 			"round": set.fullRoundText,
-	// 			"player1": {"score": player1.standing.stats.score.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
-	// 			"player2": {"score": player2.standing.stats.score.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
-	// 		}
-	// 	})
-	// 	return {
-	// 		"tournament": tournament,
-	// 		"tournamentID": result.tournament.id,
-	// 		"numEntrants": numEntrants,
-	// 		"placement": result.userEntrant?.standing?.placement,
-	// 		"date": new Date(timestamp * 1000),
-	// 		"sets": sets,
-	// 	}
-	// })
-
-	// const mappedResults = {"results": mapped, "currentPage": currentPageParam, "nextPage": currentPageParam + 1, "totalPages": totalPagesParam}
-	// res.json(mappedResults)
-  // const mappedResults = {
-  // 	"tournaments": tournaments, 
-  // 	// "setsByTournament": setsByTournament, 
-  // 	"currentPage": currentPageParam, 
-  // 	"nextPage": currentPageParam + 1, 
-  // 	"totalPages": totalPagesParam
-  // }
-
-  // res.json(mappedResults)
   res.json({"results": mapped})
 })
 
