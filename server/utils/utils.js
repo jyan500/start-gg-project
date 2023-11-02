@@ -81,8 +81,6 @@ const getAllPages = async (queryString, variables, keys) => {
 			break
 		}
 	}
-	console.log("currentPage: ", currentPage)
-	console.log("totalPages: ", totalPages)
 	return allResults
 }
 

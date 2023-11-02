@@ -6,21 +6,39 @@ import { Player, Set } from "../../types/common"
 import { ReactSearchAutocomplete } from "react-search-autocomplete" 
 import { MdKeyboardArrowLeft as ArrowLeft, MdKeyboardArrowRight as ArrowRight } from "react-icons/md"
 
-type TournamentSetResponse = {
+type tResponse = {
+	event: TournamentResponse
+	sets: Array<SetResponse>
+}
+
+type TournamentResponse = {
+	id: number
 	tournament: string
-	tournamentID: string
-	date: Date
+	tournamentId: string 
+	startAt: Date
 	numEntrants: number
 	placement: number
-	sets: Array<Set>
+}
+
+type SetResponse = {
+	winner: number
+	displayScore: string
+	round: string	
+	player1: PlayerResponse
+	player2: PlayerResponse
+}
+
+type PlayerResponse = {
+	score: number
+	entrantId: number
+	gamerTag: string
+	playerId: number
 }
 
 const PlayerDatabase = () => {
 	const [players, setPlayers] = useState<Array<Player>>([])
 	const [currentPlayer, setCurrentPlayer] = useState<Player>()
-	const [tournamentSets, setTournamentSets] = useState<Array<TournamentSetResponse>>([]) 
-	const [currentPage, setCurrentPage] = useState(1)
-	const [totalPages, setTotalPages] = useState(1)
+	const [tournaments, setTournaments] = useState<Array<tResponse>>([]) 
 	const [loading, setLoading] = useState(false)
 
 	const onSearch = async (val: string) => {
@@ -34,32 +52,31 @@ const PlayerDatabase = () => {
 		const res = await api.get(`/players/${p.userId}`)
 		setLoading(false)
 		setCurrentPlayer(p)
-		setTournamentSets(res.data.results)
-		setCurrentPage(res.data.currentPage)
-		setTotalPages(res.data.totalPages)
+		console.log("res.data.results: ", res.data.results)
+		setTournaments(res.data.results)
 	}
 
-	const onPrev = async () => {
-		if (currentPlayer){
-			setLoading(true)
-			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}&totalPages=${totalPages}`)
-			setLoading(false)
-			setTournamentSets(res.data.results)
-			setCurrentPage(res.data.currentPage)
-			setTotalPages(res.data.totalPages)
-		}
-	}
+	// const onPrev = async () => {
+	// 	if (currentPlayer){
+	// 		setLoading(true)
+	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}&totalPages=${totalPages}`)
+	// 		setLoading(false)
+	// 		setTournamentSets(res.data.results)
+	// 		setCurrentPage(res.data.currentPage)
+	// 		setTotalPages(res.data.totalPages)
+	// 	}
+	// }
 
-	const onNext = async () => {
-		if (currentPlayer){
-			setLoading(true)
-			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}&totalPages=${totalPages}`)
-			setLoading(false)
-			setTournamentSets(res.data.results)
-			setCurrentPage(res.data.currentPage)
-			setTotalPages(res.data.totalPages)
-		}
-	}
+	// const onNext = async () => {
+	// 	if (currentPlayer){
+	// 		setLoading(true)
+	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}&totalPages=${totalPages}`)
+	// 		setLoading(false)
+	// 		setTournamentSets(res.data.results)
+	// 		setCurrentPage(res.data.currentPage)
+	// 		setTotalPages(res.data.totalPages)
+	// 	}
+	// }
 
 	const onClickSet = (tournamentID: string) => {
 		const element = document.getElementById(tournamentID)
@@ -103,7 +120,7 @@ const PlayerDatabase = () => {
 			<div className = {`visibility: ${loading ? "visible" : "hidden"}`}>
 				<p className = "text-center">Loading...</p>	
 			</div>
-			<div className = {`visibility: ${tournamentSets.length ? "visible": "hidden"}`}>
+			<div className = {`visibility: ${tournaments.length ? "visible": "hidden"}`}>
 				<div className = "pb-8 pl-8 pr-8">
 					<div className = "flex flex-row p-4">
 						<div className = "flex-1 p-8">
@@ -113,19 +130,19 @@ const PlayerDatabase = () => {
 								<div className = "flex-1">Name</div>
 								<div className = "">Placing</div>
 							</div>
-							{tournamentSets.map((tournament) => {
+							{tournaments.map(({event}) => {
 								return (
-									<div onClick = {() => onClickSet(tournament.tournamentID) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
+									<div onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
 										<div className = "w-1/5">
-											{new Date(tournament.date).toLocaleDateString()}
+											{new Date(event.startAt).toLocaleDateString()}
 										</div>
-										<div className = "flex-1">{tournament.tournament}</div>
-										<div className = ""><span className = "font-bold">{tournament.placement}</span> / {tournament.numEntrants}</div>
+										<div className = "flex-1">{event.tournament}</div>
+										<div className = ""><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>
 									</div>
 								)
 							})}
 							<div className = "flex justify-between mt-4">
-								{ 
+								{/*{ 
 									tournamentSets.length && currentPage > 1 ? ( 
 									<button className = "p-4" onClick={onPrev}><ArrowLeft/><span>Previous</span></button>) : <div></div>
 								}
@@ -133,24 +150,25 @@ const PlayerDatabase = () => {
 									tournamentSets.length && currentPage <= totalPages ? (
 										<button className = "p-4" onClick={onNext}><ArrowRight/><span>Next</span></button>
 									) : <div></div>
-								}
+								}*/}
 							</div>
 						</div>
 						<div className = "flex-1 p-8" style = {{maxHeight: 500, overflowY: "scroll"}} >
 							<h1 className = "border p-4 font-bold text-center">Sets</h1>
 							{
-								tournamentSets.map((tournament) => {
+								tournaments.map((tournament) => {
+									const {event, sets} = tournament
 									return (
-										<div id = {tournament.tournamentID} className = "text-center">
+										<div id = {event.tournamentId} className = "text-center">
 											<div className = "mt-4 mb-4">
-												<h1 className = "font-bold">{tournament.tournament}</h1>
+												<h1 className = "font-bold">{event.tournament}</h1>
 											</div>
 											<div className = "font-medium flex flex-row p-2 border text-base">
 												<div className = "w-1/3">Round</div>
 												<div className = "w-1/3">Opponent</div>
 												<div className = "w-1/3">Score</div>
 											</div>
-											{tournament.sets.map((set) => {
+											{sets.map((set) => {
 												const player = set.player1.playerId === currentPlayer?.id ? set.player1 : set.player2
 												const opponent = set.player1.playerId === currentPlayer?.id ? set.player2 : set.player1
 												const winner = set.winner === set.player1.entrantId ? set.player1 : set.player2

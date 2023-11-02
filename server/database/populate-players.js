@@ -59,7 +59,8 @@ const variables = {
 	"perPage": 10,
 	"coordinates": "37.7749, -122.4194",
 	"radius": "100mi",
-	"afterDate": 1697155200 // one week ago // 1689638400 // 3 months ago // 1681776000 // 6 months ago in unix timestamp
+	// 1697155200 // one week ago // 1689638400 // 3 months ago // 1681776000 // 6 months ago in unix timestamp
+	"afterDate": 1681776000
 }
 
 
@@ -91,7 +92,7 @@ const populateDB = async (query, variables) => {
 
 	const allPlayers = Object.values(players)
 	// uncomment below to clean database
-	// await Player.deleteMany({})
+	await Player.deleteMany({})
 
 	// find	
 	const sampleId = allPlayers[0].userId
