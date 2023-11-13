@@ -40,6 +40,7 @@ const PlayerDatabase = () => {
 	const [currentPlayer, setCurrentPlayer] = useState<Player>()
 	const [tournaments, setTournaments] = useState<Array<tResponse>>([]) 
 	const [loading, setLoading] = useState(false)
+	const [currentPage, setCurrentPage] = useState(1)
 
 	const onSearch = async (val: string) => {
 		console.log("val: ", val)
@@ -49,7 +50,7 @@ const PlayerDatabase = () => {
 	const onSelect = async (p: any) => {
 		console.log("p: ", p)
 		setLoading(true)
-		const res = await api.get(`/players/${p.userId}`)
+		const res = await api.get(`/players/${p.userId}?currentPage=1`)
 		setLoading(false)
 		setCurrentPlayer(p)
 		console.log("res.data.results: ", res.data.results)
@@ -59,22 +60,20 @@ const PlayerDatabase = () => {
 	// const onPrev = async () => {
 	// 	if (currentPlayer){
 	// 		setLoading(true)
-	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}&totalPages=${totalPages}`)
+	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}`)
 	// 		setLoading(false)
-	// 		setTournamentSets(res.data.results)
-	// 		setCurrentPage(res.data.currentPage)
-	// 		setTotalPages(res.data.totalPages)
+	// 		setTournaments(res.data.results)
+	// 		setCurrentPage(currentPage-1)
 	// 	}
 	// }
 
 	// const onNext = async () => {
 	// 	if (currentPlayer){
 	// 		setLoading(true)
-	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}&totalPages=${totalPages}`)
+	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}`)
 	// 		setLoading(false)
-	// 		setTournamentSets(res.data.results)
-	// 		setCurrentPage(res.data.currentPage)
-	// 		setTotalPages(res.data.totalPages)
+	// 		setTournaments(res.data.results)
+	// 		setCurrentPage(currentPage+1)
 	// 	}
 	// }
 
@@ -130,67 +129,71 @@ const PlayerDatabase = () => {
 								<div className = "flex-1">Name</div>
 								<div className = "">Placing</div>
 							</div>
-							{tournaments.map(({event}) => {
-								return (
-									<div onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
-										<div className = "w-1/5">
-											{new Date(event.startAt).toLocaleDateString()}
+							<div style={{maxHeight: 500, overflowY: "scroll"}}>
+								{tournaments.map(({event}) => {
+									return (
+										<div onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
+											<div className = "w-1/5">
+												{new Date(event.startAt).toLocaleDateString()}
+											</div>
+											<div className = "flex-1">{event.tournament}</div>
+											<div className = ""><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>
 										</div>
-										<div className = "flex-1">{event.tournament}</div>
-										<div className = ""><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>
-									</div>
-								)
-							})}
-							<div className = "flex justify-between mt-4">
-								{/*{ 
-									tournamentSets.length && currentPage > 1 ? ( 
+									)
+								})}
+							</div>
+{/*							<div className = "flex justify-between mt-4">
+								{ 
+									tournaments.length && currentPage !== 1 ? ( 
 									<button className = "p-4" onClick={onPrev}><ArrowLeft/><span>Previous</span></button>) : <div></div>
 								}
 								{
-									tournamentSets.length && currentPage <= totalPages ? (
+									tournaments.length ? (
 										<button className = "p-4" onClick={onNext}><ArrowRight/><span>Next</span></button>
 									) : <div></div>
-								}*/}
-							</div>
+								}
+							</div>*/}
 						</div>
-						<div className = "flex-1 p-8" style = {{maxHeight: 500, overflowY: "scroll"}} >
+						<div className = "flex-1 p-8">
 							<h1 className = "border p-4 font-bold text-center">Sets</h1>
-							{
-								tournaments.map((tournament) => {
-									const {event, sets} = tournament
-									return (
-										<div id = {event.tournamentId} className = "text-center">
-											<div className = "mt-4 mb-4">
-												<h1 className = "font-bold">{event.tournament}</h1>
-											</div>
-											<div className = "font-medium flex flex-row p-2 border text-base">
-												<div className = "w-1/3">Round</div>
-												<div className = "w-1/3">Opponent</div>
-												<div className = "w-1/3">Score</div>
-											</div>
-											{sets.map((set) => {
-												const player = set.player1.playerId === currentPlayer?.id ? set.player1 : set.player2
-												const opponent = set.player1.playerId === currentPlayer?.id ? set.player2 : set.player1
-												const winner = set.winner === set.player1.entrantId ? set.player1 : set.player2
-												const isDQ = player.score === -1 || opponent.score === -1
-												const noScoreReported = player.score == null || opponent.score == null
-												const score = !noScoreReported ? `${player.score} - ${opponent.score}` : (winner.playerId === player.playerId) ? "WIN" : "LOSS" 
-												return (
-													<div className = {`text-base font-medium flex flex-row p-2 border ${winner.playerId === player.playerId ? "bg-green-500" : "bg-red-500"}`}>
-														<div className = "w-1/3"><p>{set.round}</p></div>
-														<div className = "w-1/3">
-															<p> {opponent.gamerTag} </p>	
+							<div style = {{maxHeight: 500, overflowY: "scroll"}}>
+								{
+									tournaments.map((tournament) => {
+										const {event, sets} = tournament
+										return (
+											<div id = {event.tournamentId} className = "text-center">
+												<div className = "mt-4 mb-4">
+													<h1 className = "font-bold">{event.tournament}</h1>
+												</div>
+												<div className = "font-medium flex flex-row p-2 border text-base">
+													<div className = "w-1/3">Round</div>
+													<div className = "w-1/3">Opponent</div>
+													<div className = "w-1/3">Score</div>
+												</div>
+												{sets.map((set) => {
+													const player = set.player1.playerId === currentPlayer?.id ? set.player1 : set.player2
+													const opponent = set.player1.playerId === currentPlayer?.id ? set.player2 : set.player1
+													const winner = set.winner === set.player1.entrantId ? set.player1 : set.player2
+													const isDQ = player.score === -1 || opponent.score === -1
+													const noScoreReported = player.score == null || opponent.score == null
+													const score = !noScoreReported ? `${player.score} - ${opponent.score}` : (winner.playerId === player.playerId) ? "WIN" : "LOSS" 
+													return (
+														<div className = {`text-base font-medium flex flex-row p-2 border ${winner.playerId === player.playerId ? "bg-green-500" : "bg-red-500"}`}>
+															<div className = "w-1/3"><p>{set.round}</p></div>
+															<div className = "w-1/3">
+																<p> {opponent.gamerTag} </p>	
+															</div>
+															<div className = "w-1/3">
+																<p>{isDQ ? "DQ" : score}</p>
+															</div>
 														</div>
-														<div className = "w-1/3">
-															<p>{isDQ ? "DQ" : score}</p>
-														</div>
-													</div>
-												)
-											})}
-										</div>
-									)
-								})
-							}
+													)
+												})}
+											</div>
+										)
+									})
+								}
+							</div>
 						</div>
 					</div>
 				</div>

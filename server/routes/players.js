@@ -2,6 +2,7 @@ const express = require("express")
 const axios = require("axios")
 const router = express.Router()
 const Player = require("../models/Player")
+const PlayerTournament = require("../models/PlayerTournament")
 const { getAllPages, getPage } = require("../utils/utils")
 
 router.get("/", async (req, res) => {
@@ -25,8 +26,10 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {	
 	const userId = req.params.id
 	const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
+	console.log("currentPage: ", currentPage)
 	const player = await Player.findOne({"userId": userId})
-	console.log("player: ", player)
+	const playerTournaments = await PlayerTournament.find({"playerId": player.playerId}).sort({"startAt": -1})
+	console.log("playerTournaments: ", playerTournaments)
 	// melee singles sets from player 
 
 	/*
@@ -67,56 +70,77 @@ router.get("/:id", async (req, res) => {
 //   }
 // }
 // 	`
+// 		const query1 = `
+// 	query Sets ($playerId: ID!, $page: Int){
+//   player(id: $playerId) {
+//     id
+//     sets(perPage: 30, page: $page) {
+//     	pageInfo {
+// 		  	totalPages
+// 		  	page
+// 	  	}
+//       nodes {
+//         id
+//         winnerId
+//         displayScore
+//         fullRoundText
+//         event {
+//           id
+//           name
+//           videogame {
+//           	id
+//           }
+//           type 
+//           numEntrants
+//           startAt
+//           tournament {
+//             id
+//             name
+//           }
+//         }
+//         slots {
+//           id
+//           entrant {
+//             id 
+//             name
+//             standing {
+//               placement
+//             }
+//             participants {
+//               player {
+//                 id
+//                 gamerTag
+//               }
+//             }
+//           }
+//           standing {
+//             stats {
+//               score {
+//                 value
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+// 	`
 		const query1 = `
-	query Sets ($playerId: ID!, $timestamp: Timestamp, $page: Int){
+	query Sets ($playerId: ID!, $page: Int){
   player(id: $playerId) {
-    id
-    sets(perPage: 20, page: $page, filters: {updatedAfter: $timestamp}) {
+    sets(perPage: 400, page: $page) {
     	pageInfo {
 		  	totalPages
 		  	page
 	  	}
       nodes {
         id
-        winnerId
-        displayScore
-        fullRoundText
         event {
-          id
-          name
-          videogame {
-          	id
-          }
-          type 
-          numEntrants
-          startAt
-          tournament {
-            id
-            name
-          }
-        }
-        slots {
-          id
-          entrant {
-            id 
-            name
-            standing {
-              placement
-            }
-            participants {
-              player {
-                id
-                gamerTag
-              }
-            }
-          }
-          standing {
-            stats {
-              score {
-                value
-              }
-            }
-          }
+        	tournament {
+        		id
+        		name
+        	}
         }
       }
     }
@@ -125,56 +149,54 @@ router.get("/:id", async (req, res) => {
 	`
 	// get sets for a specific tournament
 	const query2 = 
-`	
-query PlayerSets($playerId: ID!, $tournamentId: ID!){
-  	tournament(id: $tournamentId) {
-    	events(filter: {videogameId: 1, type: 1}){  
-      sets (
-        sortType: RECENT
-        filters: {
-          playerIds: [$playerId]
-        }
-      ) {
-        pageInfo {
-          totalPages
-          page
-        }
-        nodes {
-          id
-          winnerId
-          displayScore
-          fullRoundText
-          event {
-          	id 
-          }
-          slots {
-            id
-            entrant {
-              id 
-              name
-              standing {
-                placement
-              }
-              participants {
-                player {
-                  id
-                  gamerTag
-                }
-              }
-            }
-            standing {
-              stats {
-                score {
-                  value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    }
-}`
+	`	
+	query PlayerSets($playerId: ID!, $tournamentId: ID!, $eventId: ID!){
+	  	tournament(id: $tournamentId) {
+	    	events(filter: {id: $eventId}){  
+	    		numEntrants
+		      sets (
+		        sortType: RECENT
+		        filters: {
+		          playerIds: [$playerId]
+		        }
+		      ) {
+		      	pageInfo {
+		          totalPages
+		          page
+		        }
+		        nodes {
+		          id
+		          winnerId
+		          displayScore
+		          fullRoundText
+		          slots {
+		            id
+		            entrant {
+		              id 
+		              name
+		              standing {
+		                placement
+		              }
+		              participants {
+		                player {
+		                  id
+		                  gamerTag
+		                }
+		              }
+		            }
+		            standing {
+		              stats {
+		                score {
+		                  value
+		                }
+		              }
+		            }
+		          }
+		        }
+		      }
+		    }
+	    }
+	}`
 
 	// currently unused, due to the issue of it missing tournaments
   // where the player registers locally and not on start.gg
@@ -248,47 +270,94 @@ query PlayerSets($playerId: ID!, $tournamentId: ID!){
         }
       }
     }
-}
-`
-	const d = new Date()
-	// get all sets from 6 months ago
-	d.setMonth(d.getMonth() - (1 * currentPage))
-	const variables = {
-		"page": 1,
-		"userId":userId, 
-		"playerId":player.playerId,
-		"timestamp": Math.ceil(d/1000) 
 	}
+	`
 
-	const results = await getAllPages(query1, variables, ["player", "sets"])
-	let mapped = results.reduce((acc, res) => {
-		// only get melee singles sets if the player played in multiple sets in the tournament 
-		if (res.event.videogame.id === 1 && res.event.type === 1){
-			if (!(res.event.tournament.id in acc)){
-				acc[res.event.tournament.id] = {"sets": [], "event": {}}
-			}
-			const [player1, player2] = res.slots
-	    const placement = player1.entrant.participants[0].player.id === player.playerId ? player1.entrant.standing.placement : player2.entrant.standing.placement
-			const set = {
-					"winner": res.winnerId,
-					"displayScore": res.displayScore,
-					"round": res.fullRoundText,
-					"player1": {"score": player1.standing.stats.score.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
-					"player2": {"score": player2.standing.stats.score.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
-			}
-			// add new sets to the front of the array since the sets are in most recent order (rather than the order at which they were played)
-			acc[res.event.tournament.id]["sets"].unshift(set)
-			acc[res.event.tournament.id]["event"] = {
-				id: res.event.id,
-				tournament: res.event.tournament.name, 
-				tournamentId: res.event.tournament.id,
-				numEntrants: res.event.numEntrants,
-				placement: placement, 
-				startAt: new Date(res.event.startAt * 1000)}
-		}
-		return acc
-	}, {})
-	mapped = Object.values(mapped).sort((res) => res.event.startAt).reverse()
+
+	// const d = new Date()
+	// get all sets from 6 months ago
+	// d.setMonth(d.getMonth() - (1 * currentPage))
+	// console.log("player.playerId: ", player.playerId)
+	// const variables = {
+	// 	"page": 1,
+	// 	"userId":userId, 
+	// 	"playerId":player.playerId,
+	// 	"timestamp": 1696291200
+	// }
+	const mapped = []
+ 	for (let tournamentObj of playerTournaments){
+ 		const {playerId, eventId, tournamentId, tournamentName, startAt} = tournamentObj
+ 		console.log("tournamentName: ", tournamentName)
+ 		let variables = {
+ 			playerId,
+ 			eventId,
+ 			tournamentId
+ 		}
+	  const eventResults = await getAllPages(query2, variables, ["tournament", "events"], true, false)
+	  if (eventResults.length){
+	  	const sets = eventResults[0].sets.nodes.reverse()
+	  	const numEntrants = eventResults[0].numEntrants
+	  	let placement
+	  	const mappedSets = sets.map((set) => {
+					const [player1, player2] = set.slots
+					// note that placement will always have the same value throughout the event
+					placement = player1.entrant.participants[0].player.id === player.playerId ? player1.entrant.standing?.placement : player2.entrant.standing?.placement
+	  			const s = {
+						"winner": set.winnerId,
+						"displayScore": set.displayScore,
+						"round": set.fullRoundText,
+						"player1": {"score": player1.standing?.stats?.score?.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
+						"player2": {"score": player2.standing?.stats?.score?.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
+					}
+					return s
+	  	})
+	  	const eventSetObj = {
+	  		event: {
+	  			id: eventId,
+	  			tournamentId: tournamentId,
+	  			tournament: tournamentName,
+	  			startAt: new Date(startAt*1000),
+	  			numEntrants: numEntrants,
+	  			placement: placement
+	  		},
+	  		sets: mappedSets
+	  	}
+	  	mapped.push(eventSetObj)
+	  }
+ 	} 
+	
+
+
+	// const results = await getAllPages(query1, variables, ["player", "sets"])
+	// let mapped = results.reduce((acc, res) => {
+	// 	// only get melee singles sets if the player played in multiple sets in the tournament 
+	// 	if (res.event.videogame.id === 1 && res.event.type === 1){
+	// 		if (!(res.event.tournament.id in acc)){
+	// 			acc[res.event.tournament.id] = {"sets": [], "event": {}}
+	// 		}
+	// 		const [player1, player2] = res.slots
+	//     const placement = player1.entrant.participants[0].player.id === player.playerId ? player1.entrant.standing?.placement : player2.entrant.standing?.placement
+	// 		const set = {
+	// 				"winner": res.winnerId,
+	// 				"displayScore": res.displayScore,
+	// 				"round": res.fullRoundText,
+	// 				"player1": {"score": player1.standing?.stats?.score?.value, "entrantId": player1.entrant.id, "gamerTag": player1.entrant.participants[0].player.gamerTag, "playerId": player1.entrant.participants[0].player.id},
+	// 				"player2": {"score": player2.standing?.stats?.score?.value, "entrantId": player2.entrant.id, "gamerTag": player2.entrant.participants[0].player.gamerTag, "playerId": player2.entrant.participants[0].player.id}
+	// 		}
+	// 		// add new sets to the front of the array since the sets are in most recent order (rather than the order at which they were played)
+	// 		acc[res.event.tournament.id]["sets"].unshift(set)
+	// 		acc[res.event.tournament.id]["event"] = {
+	// 			id: res.event.id,
+	// 			tournament: res.event.tournament.name, 
+	// 			tournamentId: res.event.tournament.id,
+	// 			numEntrants: res.event.numEntrants,
+	// 			placement: placement, 
+	// 			startAt: new Date(res.event.startAt * 1000)}
+	// 	}
+	// 	return acc
+	// }, {})
+	// mapped = Object.values(mapped).sort((a, b) => new Date(b.event.startAt) - new Date(a.event.startAt))
+	// console.log(JSON.stringify(mapped))
 	
   res.json({"results": mapped})
 })
