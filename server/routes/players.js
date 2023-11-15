@@ -25,11 +25,16 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {	
 	const userId = req.params.id
-	const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
-	console.log("currentPage: ", currentPage)
+	// const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
+	const paginationCursor = req.query?.cursor
+	const limit = 10 
 	const player = await Player.findOne({"userId": userId})
-	const playerTournaments = await PlayerTournament.find({"playerId": player.playerId}).sort({"startAt": -1})
-	console.log("playerTournaments: ", playerTournaments)
+	// using the unix timestamp as a unique cursor
+	const playerTournaments = await PlayerTournament.find(
+		{"playerId": player.playerId, 
+		...(paginationCursor ? {"startAt": {$lt: paginationCursor}} : {})
+	}).sort({"startAt": -1}).limit(limit + 1)
+	// console.log("playerTournaments: ", playerTournaments)
 	// melee singles sets from player 
 
 	/*
@@ -287,13 +292,13 @@ router.get("/:id", async (req, res) => {
 	const mapped = []
  	for (let tournamentObj of playerTournaments){
  		const {playerId, eventId, tournamentId, tournamentName, startAt} = tournamentObj
- 		console.log("tournamentName: ", tournamentName)
+ 		// console.log("tournamentName: ", tournamentName)
  		let variables = {
  			playerId,
  			eventId,
  			tournamentId
  		}
-	  const eventResults = await getAllPages(query2, variables, ["tournament", "events"], true, false)
+	  const eventResults = await getAllPages(query2, variables, ["tournament", "events"], 0, false)
 	  if (eventResults.length){
 	  	const sets = eventResults[0].sets.nodes.reverse()
 	  	const numEntrants = eventResults[0].numEntrants
@@ -318,7 +323,8 @@ router.get("/:id", async (req, res) => {
 	  			tournament: tournamentName,
 	  			startAt: new Date(startAt*1000),
 	  			numEntrants: numEntrants,
-	  			placement: placement
+	  			placement: placement,
+	  			timestamp: startAt,
 	  		},
 	  		sets: mappedSets
 	  	}
@@ -359,7 +365,11 @@ router.get("/:id", async (req, res) => {
 	// mapped = Object.values(mapped).sort((a, b) => new Date(b.event.startAt) - new Date(a.event.startAt))
 	// console.log(JSON.stringify(mapped))
 	
-  res.json({"results": mapped})
+	// the cursor is used for pagination, it is the last id in the list
+	// don't include the last element since this element determines the "next" pointer
+	// if there was a next cursor, get the previous cursor too
+	const nextCursor = mapped.length === limit + 1 ? mapped[mapped.length-1].event.timestamp : null
+  res.json({"results": mapped.length === limit + 1 ? mapped.slice(0, mapped.length-1) : mapped, "nextCursor": nextCursor})
 })
 
 module.exports = router

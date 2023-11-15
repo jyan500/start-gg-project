@@ -20,7 +20,6 @@ const sendGraphQLRequest = async (query, variables) => {
 			}
 		)
 		if (response.status == 200){
-			console.log("response.data: ", response.data)
 			return response.data.data
 		}
 		else {
@@ -28,7 +27,6 @@ const sendGraphQLRequest = async (query, variables) => {
 		}
 	}
 	catch (error) {
-		console.log("error: ", error.message)
 		return {"error": error.message}
 	}
 }
@@ -62,7 +60,7 @@ const getPage = async (queryString, variables, keys, currentPageParam = 1, total
 	return [allResults, currentPage, totalPages]
 }
 
-const getAllPages = async (queryString, variables, keys, batch = false, expectObj = true) => {
+const getAllPages = async (queryString, variables, keys, batch = 500, expectObj = true) => {
 	let totalPages = 1 
 	let currentPage = 1
 	let allResults = []
@@ -70,7 +68,6 @@ const getAllPages = async (queryString, variables, keys, batch = false, expectOb
 		const res = await sendGraphQLRequest(queryString, {...variables, page: currentPage})
 		if (res){
 			let data = res
-			console.log("data: ", data)
 			for (let k of keys){
 				data = data[k]
 				if (!data){
@@ -95,9 +92,7 @@ const getAllPages = async (queryString, variables, keys, batch = false, expectOb
 		else {
 			break
 		}
-		if (batch){
-			await sleep(1000)
-		}
+		await sleep(batch)
 	}
 	return allResults
 }

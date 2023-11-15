@@ -17,7 +17,7 @@ const getPlayerTournaments = async (ts, query, player) => {
       // "timestamp":  1667543300
       "timestamp":  ts
     }
-    return await getAllPages(query, variables, ["player", "sets"], true)
+    return await getAllPages(query, variables, ["player", "sets"], 1000)
 }
 
 const populateTournamentsAttended = async () => {

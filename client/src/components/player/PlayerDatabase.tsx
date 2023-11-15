@@ -1,6 +1,7 @@
-import React, {useState} from "react"
+import React, {useEffect, useState} from "react"
 import PlayerBanner from "../../assets/bay-area-mini.jpeg"
 import HeroSection from "../styled/HeroSection"
+import LoadingSpinner from "../styled/LoadingSpinner"
 import api from "../../config/api"
 import { Player, Set } from "../../types/common"
 import { ReactSearchAutocomplete } from "react-search-autocomplete" 
@@ -40,42 +41,43 @@ const PlayerDatabase = () => {
 	const [currentPlayer, setCurrentPlayer] = useState<Player>()
 	const [tournaments, setTournaments] = useState<Array<tResponse>>([]) 
 	const [loading, setLoading] = useState(false)
-	const [currentPage, setCurrentPage] = useState(1)
+	const [nextCursor, setNextCursor] = useState()
+
+	const [firstElementId, setFirstElementId] = useState("")
+
+	// when the next set of elements loads in via the API,
+	// scroll to the first element that was added
+	useEffect(() => {
+	    const element = document.getElementById(firstElementId)
+	    if (element)
+	        element.scrollIntoView({ behavior: 'smooth' })
+	}, [firstElementId])
 
 	const onSearch = async (val: string) => {
-		console.log("val: ", val)
 		const res = await api.get(`/players?tag=${val}`)
 		setPlayers(res.data)
 	}
 	const onSelect = async (p: any) => {
-		console.log("p: ", p)
 		setLoading(true)
 		const res = await api.get(`/players/${p.userId}?currentPage=1`)
 		setLoading(false)
 		setCurrentPlayer(p)
-		console.log("res.data.results: ", res.data.results)
 		setTournaments(res.data.results)
+		setNextCursor(res.data.nextCursor)
 	}
 
-	// const onPrev = async () => {
-	// 	if (currentPlayer){
-	// 		setLoading(true)
-	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage-1}`)
-	// 		setLoading(false)
-	// 		setTournaments(res.data.results)
-	// 		setCurrentPage(currentPage-1)
-	// 	}
-	// }
-
-	// const onNext = async () => {
-	// 	if (currentPlayer){
-	// 		setLoading(true)
-	// 		const res = await api.get(`/players/${currentPlayer.userId}?currentPage=${currentPage+1}`)
-	// 		setLoading(false)
-	// 		setTournaments(res.data.results)
-	// 		setCurrentPage(currentPage+1)
-	// 	}
-	// }
+	const onNext = async () => {
+		if (currentPlayer){
+			setLoading(true)
+			const res = await api.get(`/players/${currentPlayer.userId}?cursor=${nextCursor}&isNext=${true}`)
+			setLoading(false)
+			setTournaments([...tournaments, ...res.data.results])
+			if (res.data.results.length){
+				setFirstElementId(res.data.results[0].event.id)
+			}
+			setNextCursor(res.data.nextCursor)
+		}
+	}
 
 	const onClickSet = (tournamentID: string) => {
 		const element = document.getElementById(tournamentID)
@@ -89,7 +91,7 @@ const PlayerDatabase = () => {
 			<HeroSection  imgUrl={PlayerBanner} backgroundPosition="top">
 				<h1 className = "text-6xl font-bold" style={{color: "white"}}>Players</h1>
 			</HeroSection>
-			<div className = "flex flex-col justify-center items-center p-8">
+			<div className = "flex flex-col justify-center items-center pr-8 pl-8">
 				<div className = "text-center">
 					<h1 className = "text-6xl">Norcal Player Database</h1>
 				</div>
@@ -116,23 +118,20 @@ const PlayerDatabase = () => {
 					</div>
 				</div>
 			</div>
-			<div className = {`visibility: ${loading ? "visible" : "hidden"}`}>
-				<p className = "text-center">Loading...</p>	
-			</div>
 			<div className = {`visibility: ${tournaments.length ? "visible": "hidden"}`}>
-				<div className = "pb-8 pl-8 pr-8">
+				<div className = "pl-8 pr-8">
 					<div className = "flex flex-row p-4">
-						<div className = "flex-1 p-8">
+						<div className = "flex-1 pr-8 pl-8">
 							<h1 className = "border p-4 font-bold text-center">Tournaments</h1>
 							<div className = "font-medium flex flex-row p-2 border">
 								<div className = "w-1/5">Date</div>
 								<div className = "flex-1">Name</div>
 								<div className = "">Placing</div>
 							</div>
-							<div style={{maxHeight: 500, overflowY: "scroll"}}>
+							<div style={{maxHeight: 550, overflowY: "scroll"}}>
 								{tournaments.map(({event}) => {
 									return (
-										<div onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
+										<div id = {"" + event.id} onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
 											<div className = "w-1/5">
 												{new Date(event.startAt).toLocaleDateString()}
 											</div>
@@ -142,21 +141,17 @@ const PlayerDatabase = () => {
 									)
 								})}
 							</div>
-{/*							<div className = "flex justify-between mt-4">
-								{ 
-									tournaments.length && currentPage !== 1 ? ( 
-									<button className = "p-4" onClick={onPrev}><ArrowLeft/><span>Previous</span></button>) : <div></div>
-								}
+							<div className = "flex justify-between mt-4">
 								{
-									tournaments.length ? (
-										<button className = "p-4" onClick={onNext}><ArrowRight/><span>Next</span></button>
+									tournaments.length && nextCursor ? (
+										<button className = "p-4" onClick={onNext}><span>Load More Results</span></button>
 									) : <div></div>
 								}
-							</div>*/}
+							</div>
 						</div>
-						<div className = "flex-1 p-8">
+						<div className = "flex-1 pr-8 pl-8">
 							<h1 className = "border p-4 font-bold text-center">Sets</h1>
-							<div style = {{maxHeight: 500, overflowY: "scroll"}}>
+							<div style = {{maxHeight: 550, overflowY: "scroll"}}>
 								{
 									tournaments.map((tournament) => {
 										const {event, sets} = tournament
@@ -197,6 +192,9 @@ const PlayerDatabase = () => {
 						</div>
 					</div>
 				</div>
+			</div>
+			<div className = "flex flex-col justify-center items-center pb-4">
+				<LoadingSpinner loading={loading}/>
 			</div>
 		</div>
 	)
