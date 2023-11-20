@@ -27,14 +27,19 @@ router.get("/:id", async (req, res) => {
 	const userId = req.params.id
 	// const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
 	const paginationCursor = req.query?.cursor
+	const onOrOffline = req.query?.onOrOffline
+	const considerOnline = onOrOffline === "Online" || onOrOffline === "Offline"
 	const limit = 10 
 	const player = await Player.findOne({"userId": userId})
 	// using the unix timestamp as a unique cursor
 	const playerTournaments = await PlayerTournament.find(
-		{"playerId": player.playerId, 
-		...(paginationCursor ? {"startAt": {$lt: paginationCursor}} : {})
-	}).sort({"startAt": -1}).limit(limit + 1)
-	// console.log("playerTournaments: ", playerTournaments)
+		{
+			"playerId": player.playerId, 
+			...(considerOnline ? {isOnline: onOrOffline === "Online"} : {}),
+		  ...(paginationCursor ? {"startAt": {$lt: paginationCursor}} : {}),
+		}
+	).sort({"startAt": -1}).limit(limit + 1)
+	console.log("playerTournaments: ", playerTournaments)
 	// melee singles sets from player 
 
 	/*

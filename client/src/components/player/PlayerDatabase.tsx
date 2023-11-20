@@ -44,6 +44,7 @@ const PlayerDatabase = () => {
 	const [nextCursor, setNextCursor] = useState()
 
 	const [firstElementId, setFirstElementId] = useState("")
+	const [form, setForm] = useState<Record<string, any>>({"onOrOffline": "All"})
 
 	// when the next set of elements loads in via the API,
 	// scroll to the first element that was added
@@ -86,19 +87,43 @@ const PlayerDatabase = () => {
 		}
 	}
 
+	const onValueChange = (e: React.FormEvent<HTMLInputElement>) => {
+		setForm({...form, onOrOffline: (e.target as HTMLInputElement).value})
+	}
+
+	const onFormSubmit = async (e: React.FormEvent) => {
+		if (currentPlayer){
+			e.preventDefault()
+			let urlStringParts: string[] = []
+			Object.keys(form).forEach((key)=>{
+				urlStringParts.push(`${key}=${form[key]}`)
+			})
+			const urlString = urlStringParts.join("&")
+			setLoading(true)
+			console.log("urlString: ", urlString)
+			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=1&${urlString}`)
+			setLoading(false)
+			setTournaments(res.data.results)
+			if (res.data.results.length){
+				setFirstElementId(res.data.results[0].event.id)
+			}
+			setNextCursor(res.data.nextCursor)
+		}
+	}
+
 	return (
 		<div>
 			<HeroSection  imgUrl={PlayerBanner} backgroundPosition="top">
 				<h1 className = "text-6xl font-bold" style={{color: "white"}}>Players</h1>
 			</HeroSection>
-			<div className = "flex flex-col justify-center items-center pr-8 pl-8">
+			<div className = "flex flex-col justify-center items-center pt-8 pr-8 pl-8">
 				<div className = "text-center">
 					<h1 className = "text-6xl">Norcal Player Database</h1>
 				</div>
 				<div className = "text-center p-8">
 					<p className = "border p-4 font-bold">Due to data size limitations, this database will only show players that have attended a norcal tournament within the current year</p>
 					<div className = "flex items-center justify-between p-8">
-						<div className = "w-1/2">
+						<div className = "w-1/2 pl-4 pr-4">
 							<ReactSearchAutocomplete 
 								items={players} 
 								onSelect={onSelect} 
@@ -114,7 +139,21 @@ const PlayerDatabase = () => {
 								}
 							/>
 						</div>
-						<div className = "w-1/2">Advanced Filters Go Here</div>
+						<div className = {`visibility: ${tournaments.length ? "visible" : "hidden"} w-1/2 pl-2 pr-2`}>
+							<form>
+								<div className = "flex gap-x-6 flex-row">
+									{["Online", "Offline", "All"].map((val) => {
+										return (
+											<div className = "flex items-center">
+												<input onChange = {onValueChange} value = {val} checked = {form.onOrOffline === val} type="radio" name="online" className = "shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-gray-800 dark:border-gray-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800"/>
+												<label htmlFor = "online" className = "text-sm ms-2">{val}</label>
+											</div>
+										)
+									})}
+									<div><button onClick={onFormSubmit}>Submit</button></div>
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -133,7 +172,7 @@ const PlayerDatabase = () => {
 									return (
 										<div id = {"" + event.id} onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
 											<div className = "w-1/5">
-												{new Date(event.startAt).toLocaleDateString()}
+												{new Date(event.startAt).toLocaleDateString("en-US")}
 											</div>
 											<div className = "flex-1">{event.tournament}</div>
 											<div className = ""><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>

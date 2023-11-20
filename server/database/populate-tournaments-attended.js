@@ -37,7 +37,7 @@ const populateTournamentsAttended = async () => {
   const query1 = `
   query Sets ($playerId: ID!, $page: Int, $timestamp: Timestamp){
   player(id: $playerId) {
-    sets(perPage: 200, page: $page, filters: {updatedAfter: $timestamp}) {
+    sets(perPage: 180, page: $page, filters: {updatedAfter: $timestamp}) {
     	pageInfo {
   	  	totalPages
   	  	page
@@ -47,6 +47,8 @@ const populateTournamentsAttended = async () => {
           id
           startAt
           type
+          isOnline
+          numEntrants
           videogame {
             id
           }
@@ -60,9 +62,11 @@ const populateTournamentsAttended = async () => {
   }
   }
   `
-  const d = new Date()
+  let d = new Date()
   // four years ago
   d.setFullYear(d.getFullYear()-4)
+  // one week ago
+  // d.setDate(d.getDate()-7)
   const ts = parseInt(d.getTime()/1000)
   const players = await Player.find()
   // const players = await Player.find({"gamerTag": { "$regex": "j_noodles", "$options": "i"}}, { _id: 0}).sort({"gamerTag": 1})
@@ -71,21 +75,30 @@ const populateTournamentsAttended = async () => {
     const res = await getPlayerTournaments(ts, query1, p)
     const tournaments = {}
     res.map((result) => {
-      const {id: eventId, startAt, videogame, type, tournament} = result.event || {}
+      const {id: eventId, startAt, videogame, type, tournament, isOnline, numEntrants} = result.event || {}
       const tournamentId = tournament?.id
       // only get melee singles sets, we'd expect only one event of this type
       // per tournament so we can have eventId and startAt as the value to the tournamentId key
       // without worrying about overwriting a previous one
       if (result.event && videogame.id === 1 && type === 1 && tournamentId && !(tournamentId in tournaments)){
-        tournaments[tournamentId] = {eventId, startAt, "tournamentName": tournament?.name, tournamentId}
+        tournaments[tournamentId] = {eventId, startAt, "tournamentName": tournament?.name, tournamentId, isOnline, numEntrants}
       }
     })
     const sortedTournaments = Object.values(tournaments).sort((a, b) => new Date(b.startAt*1000) - new Date(a.startAt*1000))
     const mapped = Object.keys(tournaments).map((tId) => {
+      const {startAt, eventId, tournamentName, isOnline, numEntrants} = tournaments[tId]
       return {
         updateOne: {
-          filter: {playerId: p.playerId, tournamentId: tId, eventId: tournaments[tId].eventId},
-          update: {playerId: p.playerId, tournamentId: tId, eventId: tournaments[tId].eventId, startAt: tournaments[tId].startAt, tournamentName: tournaments[tId].tournamentName},
+          filter: {playerId: p.playerId, tournamentId: tId, eventId: eventId},
+          update: {
+            playerId: p.playerId, 
+            tournamentId: tId, 
+            eventId: eventId, 
+            startAt: startAt, 
+            tournamentName: tournamentName, 
+            isOnline: isOnline, 
+            numEntrants: numEntrants
+          },
           upsert: true
         }
       }
@@ -98,6 +111,7 @@ const populateTournamentsAttended = async () => {
     }
   }
 }
+
 
 populateTournamentsAttended().then(() => {
   process.exit(1)

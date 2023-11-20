@@ -5,7 +5,9 @@ const playerTournamentSchema = new mongoose.Schema({
 	tournamentId: Number,
 	tournamentName: String,
 	eventId: Number,
-	startAt: Number
+	startAt: Number,
+	numEntrants: Number,
+	isOnline: Boolean,
 })
 
 const PlayerTournament = mongoose.model("PlayerTournament", playerTournamentSchema)
