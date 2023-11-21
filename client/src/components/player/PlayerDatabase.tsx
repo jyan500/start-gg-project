@@ -5,7 +5,7 @@ import LoadingSpinner from "../styled/LoadingSpinner"
 import api from "../../config/api"
 import { Player, Set } from "../../types/common"
 import { ReactSearchAutocomplete } from "react-search-autocomplete" 
-import { MdKeyboardArrowLeft as ArrowLeft, MdKeyboardArrowRight as ArrowRight } from "react-icons/md"
+import { MdOutlineWifi as OnlineIcon } from "react-icons/md";
 
 type tResponse = {
 	event: TournamentResponse
@@ -19,6 +19,7 @@ type TournamentResponse = {
 	startAt: Date
 	numEntrants: number
 	placement: number
+	isOnline: boolean
 }
 
 type SetResponse = {
@@ -44,6 +45,7 @@ const PlayerDatabase = () => {
 	const [nextCursor, setNextCursor] = useState()
 
 	const [firstElementId, setFirstElementId] = useState("")
+	const [urlString, setUrlString] = useState("")
 	const [form, setForm] = useState<Record<string, any>>({"onOrOffline": "All"})
 
 	// when the next set of elements loads in via the API,
@@ -60,7 +62,7 @@ const PlayerDatabase = () => {
 	}
 	const onSelect = async (p: any) => {
 		setLoading(true)
-		const res = await api.get(`/players/${p.userId}?currentPage=1`)
+		const res = await api.get(`/players/${p.userId}`)
 		setLoading(false)
 		setCurrentPlayer(p)
 		setTournaments(res.data.results)
@@ -70,7 +72,7 @@ const PlayerDatabase = () => {
 	const onNext = async () => {
 		if (currentPlayer){
 			setLoading(true)
-			const res = await api.get(`/players/${currentPlayer.userId}?cursor=${nextCursor}&isNext=${true}`)
+			const res = await api.get(`/players/${currentPlayer.userId}?cursor=${nextCursor}&isNext=${true}&${urlString}`)
 			setLoading(false)
 			setTournaments([...tournaments, ...res.data.results])
 			if (res.data.results.length){
@@ -98,10 +100,11 @@ const PlayerDatabase = () => {
 			Object.keys(form).forEach((key)=>{
 				urlStringParts.push(`${key}=${form[key]}`)
 			})
-			const urlString = urlStringParts.join("&")
+			const curUrlString = urlStringParts.join("&")
+			setUrlString(curUrlString)
 			setLoading(true)
 			console.log("urlString: ", urlString)
-			const res = await api.get(`/players/${currentPlayer.userId}?currentPage=1&${urlString}`)
+			const res = await api.get(`/players/${currentPlayer.userId}?${curUrlString}`)
 			setLoading(false)
 			setTournaments(res.data.results)
 			if (res.data.results.length){
@@ -163,19 +166,21 @@ const PlayerDatabase = () => {
 						<div className = "flex-1 pr-8 pl-8">
 							<h1 className = "border p-4 font-bold text-center">Tournaments</h1>
 							<div className = "font-medium flex flex-row p-2 border">
-								<div className = "w-1/5">Date</div>
-								<div className = "flex-1">Name</div>
-								<div className = "">Placing</div>
+								<div className = "w-1/4">Date</div>
+								<div className = "w-2/4">Name</div>
+								<div className = "w-1/4"></div>
+								<div className = "w-1/4">Placing</div>
 							</div>
 							<div style={{maxHeight: 550, overflowY: "scroll"}}>
 								{tournaments.map(({event}) => {
 									return (
 										<div id = {"" + event.id} onClick = {() => onClickSet(event.tournamentId) } className = "cursor-pointer hover:bg-slate-300 font-medium flex flex-row p-2 border">
-											<div className = "w-1/5">
+											<div className = "w-1/4">
 												{new Date(event.startAt).toLocaleDateString("en-US")}
 											</div>
-											<div className = "flex-1">{event.tournament}</div>
-											<div className = ""><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>
+											<div className = "w-2/4">{event.tournament}</div>
+											<div className = "w-1/4 ml-4">{event.isOnline && <OnlineIcon/>}</div>
+											<div className = "w-1/4"><span className = "font-bold">{event.placement}</span> / {event.numEntrants}</div>
 										</div>
 									)
 								})}

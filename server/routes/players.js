@@ -29,6 +29,8 @@ router.get("/:id", async (req, res) => {
 	const paginationCursor = req.query?.cursor
 	const onOrOffline = req.query?.onOrOffline
 	const considerOnline = onOrOffline === "Online" || onOrOffline === "Offline"
+	console.log("considerOnline: ", considerOnline)
+	console.log("onOrOffline === Online: ", onOrOffline === "Online")
 	const limit = 10 
 	const player = await Player.findOne({"userId": userId})
 	// using the unix timestamp as a unique cursor
@@ -39,7 +41,7 @@ router.get("/:id", async (req, res) => {
 		  ...(paginationCursor ? {"startAt": {$lt: paginationCursor}} : {}),
 		}
 	).sort({"startAt": -1}).limit(limit + 1)
-	console.log("playerTournaments: ", playerTournaments)
+	// console.log("playerTournaments: ", playerTournaments)
 	// melee singles sets from player 
 
 	/*
@@ -296,7 +298,7 @@ router.get("/:id", async (req, res) => {
 	// }
 	const mapped = []
  	for (let tournamentObj of playerTournaments){
- 		const {playerId, eventId, tournamentId, tournamentName, startAt} = tournamentObj
+ 		const {playerId, eventId, tournamentId, tournamentName, startAt, isOnline, numEntrants} = tournamentObj
  		// console.log("tournamentName: ", tournamentName)
  		let variables = {
  			playerId,
@@ -306,7 +308,6 @@ router.get("/:id", async (req, res) => {
 	  const eventResults = await getAllPages(query2, variables, ["tournament", "events"], 0, false)
 	  if (eventResults.length){
 	  	const sets = eventResults[0].sets.nodes.reverse()
-	  	const numEntrants = eventResults[0].numEntrants
 	  	let placement
 	  	const mappedSets = sets.map((set) => {
 					const [player1, player2] = set.slots
@@ -330,6 +331,7 @@ router.get("/:id", async (req, res) => {
 	  			numEntrants: numEntrants,
 	  			placement: placement,
 	  			timestamp: startAt,
+	  			isOnline: isOnline
 	  		},
 	  		sets: mappedSets
 	  	}
