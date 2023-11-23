@@ -2,12 +2,6 @@ import React from "react"
 import RecentPR from "../../assets/winter-2022-2023-norcal-PR.jpeg"
 import HeroSection from "../styled/HeroSection"
 import PlayerBanner from "../../assets/bay-area-mini.jpeg"
-import Falco from "../../assets/falco.gif"
-import Falcon from "../../assets/falcon.gif"
-import Fox from "../../assets/fox.gif"
-import Pikachu from "../../assets/pikachu.gif"
-import Marth from "../../assets/marth.gif"
-import Sheik from "../../assets/sheik.gif"
 
 const PowerRanking = () => {
 	return (

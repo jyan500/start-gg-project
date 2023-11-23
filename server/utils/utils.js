@@ -20,7 +20,6 @@ const sendGraphQLRequest = async (query, variables) => {
 			}
 		)
 		if (response.status == 200){
-			console.log("response.data:" ,response.data)
 			return response.data.data
 		}
 		else {
@@ -81,6 +80,9 @@ const getAllPages = async (queryString, variables, keys, batch = 500, expectObj 
 				if (expectObj){
 					allResults = [...allResults, ...data["nodes"]]
 					totalPages = data["pageInfo"]["totalPages"]
+					if (totalPages === 0){
+						break
+					}
 				}
 				else {
 					allResults = [...allResults, ...data]

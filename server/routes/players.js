@@ -19,7 +19,9 @@ router.get("/", async (req, res) => {
 		}
 	}
 	else {
-		res.json([])	
+		const players = await Player.find().sort({"gamerTag": 1})
+		const mapped = players.map((p) => ({...p.toObject(), id: p.playerId}))
+		res.json(mapped)	
 	}
 })
 
@@ -29,8 +31,6 @@ router.get("/:id", async (req, res) => {
 	const paginationCursor = req.query?.cursor
 	const onOrOffline = req.query?.onOrOffline
 	const considerOnline = onOrOffline === "Online" || onOrOffline === "Offline"
-	console.log("considerOnline: ", considerOnline)
-	console.log("onOrOffline === Online: ", onOrOffline === "Online")
 	const limit = 10 
 	const player = await Player.findOne({"userId": userId})
 	// using the unix timestamp as a unique cursor

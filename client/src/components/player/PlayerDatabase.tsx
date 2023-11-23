@@ -6,6 +6,9 @@ import api from "../../config/api"
 import { Player, Set } from "../../types/common"
 import { ReactSearchAutocomplete } from "react-search-autocomplete" 
 import { MdOutlineWifi as OnlineIcon } from "react-icons/md";
+import useSWR from "swr"
+
+const fetcher = (url: string) => api.get(url).then(res => res.data)
 
 type tResponse = {
 	event: TournamentResponse
@@ -38,7 +41,7 @@ type PlayerResponse = {
 }
 
 const PlayerDatabase = () => {
-	const [players, setPlayers] = useState<Array<Player>>([])
+	const {data: players, error} = useSWR("/players", fetcher)
 	const [currentPlayer, setCurrentPlayer] = useState<Player>()
 	const [tournaments, setTournaments] = useState<Array<tResponse>>([]) 
 	const [loading, setLoading] = useState(false)
@@ -56,10 +59,6 @@ const PlayerDatabase = () => {
 	        element.scrollIntoView({ behavior: 'smooth' })
 	}, [firstElementId])
 
-	const onSearch = async (val: string) => {
-		const res = await api.get(`/players?tag=${val}`)
-		setPlayers(res.data)
-	}
 	const onSelect = async (p: any) => {
 		setLoading(true)
 		const res = await api.get(`/players/${p.userId}`)
@@ -130,8 +129,8 @@ const PlayerDatabase = () => {
 							<ReactSearchAutocomplete 
 								items={players} 
 								onSelect={onSelect} 
-								onSearch={onSearch} 
 								fuseOptions={{keys: ["gamerTag"]}} 
+								inputDebounce={500}
 								resultStringKeyName={"gamerTag"}
 								styling ={
 									{ 

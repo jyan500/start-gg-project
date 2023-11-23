@@ -13,8 +13,6 @@ const getPlayerTournaments = async (ts, query, player) => {
     let variables = {
       "page": 1,
       "playerId": player.playerId,
-      // "timestamp":  d.getTime()/1000
-      // "timestamp":  1667543300
       "timestamp":  ts
     }
     return await getAllPages(query, variables, ["player", "sets"], 1000)
@@ -64,9 +62,9 @@ const populateTournamentsAttended = async () => {
   `
   let d = new Date()
   // four years ago
-  d.setFullYear(d.getFullYear()-4)
+  // d.setFullYear(d.getFullYear()-4)
   // one week ago
-  // d.setDate(d.getDate()-7)
+  d.setDate(d.getDate()-7)
   const ts = parseInt(d.getTime()/1000)
   const players = await Player.find()
   // const players = await Player.find({"gamerTag": { "$regex": "j_noodles", "$options": "i"}}, { _id: 0}).sort({"gamerTag": 1})
@@ -109,6 +107,7 @@ const populateTournamentsAttended = async () => {
     catch (error){
       console.log(error)
     }
+    await sleep(500)
   }
 }
 
