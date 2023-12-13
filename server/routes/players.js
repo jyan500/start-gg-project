@@ -30,6 +30,7 @@ router.get("/:id", async (req, res) => {
 	// const currentPage = parseInt(req.query?.currentPage) != NaN ? parseInt(req.query?.currentPage) : 1 
 	const paginationCursor = req.query?.cursor
 	const onOrOffline = req.query?.onOrOffline
+	const numEntrants = req.query.numEntrants ? parseInt(req.query?.numEntrants) : null
 	const considerOnline = onOrOffline === "Online" || onOrOffline === "Offline"
 	const limit = 10 
 	const player = await Player.findOne({"userId": userId})
@@ -37,6 +38,7 @@ router.get("/:id", async (req, res) => {
 	const playerTournaments = await PlayerTournament.find(
 		{
 			"playerId": player.playerId, 
+			...(numEntrants ? {"numEntrants": {$lt: numEntrants}} : {}),
 			...(considerOnline ? {isOnline: onOrOffline === "Online"} : {}),
 		  ...(paginationCursor ? {"startAt": {$lt: paginationCursor}} : {}),
 		}
@@ -376,6 +378,7 @@ router.get("/:id", async (req, res) => {
 	// don't include the last element since this element determines the "next" pointer
 	// if there was a next cursor, get the previous cursor too
 	const nextCursor = mapped.length === limit + 1 ? mapped[mapped.length-1].event.timestamp : null
+	console.log("mapped: ", mapped)
   res.json({"results": mapped.length === limit + 1 ? mapped.slice(0, mapped.length-1) : mapped, "nextCursor": nextCursor})
 })
 
