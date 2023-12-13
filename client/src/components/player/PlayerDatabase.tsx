@@ -49,7 +49,7 @@ const PlayerDatabase = () => {
 
 	const [firstElementId, setFirstElementId] = useState("")
 	const [urlString, setUrlString] = useState("")
-	const [form, setForm] = useState<Record<string, any>>({"onOrOffline": "All"})
+	const [form, setForm] = useState<Record<string, any>>({"onOrOffline": "All", "numEntrants": 5000})
 
 	// when the next set of elements loads in via the API,
 	// scroll to the first element that was added
@@ -115,7 +115,7 @@ const PlayerDatabase = () => {
 
 	return (
 		<div>
-			<HeroSection  imgUrl={PlayerBanner} backgroundPosition="top">
+			<HeroSection imgUrl={PlayerBanner} backgroundPosition="top">
 				<h1 className = "text-6xl font-bold" style={{color: "white"}}>Players</h1>
 			</HeroSection>
 			<div className = "flex flex-col justify-center items-center pt-8 pr-8 pl-8">
@@ -141,7 +141,7 @@ const PlayerDatabase = () => {
 								}
 							/>
 						</div>
-						<div className = {`visibility: ${tournaments.length ? "visible" : "hidden"} w-1/2 pl-2 pr-2`}>
+						<div className = "w-1/2 pl-2 pr-2">
 							<form>
 								<div className = "flex gap-x-6 flex-row">
 									{["Online", "Offline", "All"].map((val) => {
@@ -152,7 +152,8 @@ const PlayerDatabase = () => {
 											</div>
 										)
 									})}
-									<div><button onClick={onFormSubmit}>Submit</button></div>
+									<div><select onChange = {(e) => { setForm({...form, numEntrants: e.target.value}) }} value={form.numEntrants}>{[10, 50, 100, 500, 1000, 5000].map((val) => { return (<option value = {val}>{val}</option>) })}</select></div>
+									<div><button onClick = {onFormSubmit}>Submit</button></div>
 								</div>
 							</form>
 						</div>
